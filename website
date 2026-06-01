@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vincent's Marketplace</title>
+    <style>
+        /* --- Global Styles --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Login Page Styles --- */
+        .login-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 24px;
+            color: #2c3e50;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #3498db;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:hover { background-color: #2980b9; }
+        .btn:active { transform: scale(0.98); }
+
+        .error-msg {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* --- App Layout Styles --- */
+        .app-container {
+            display: none; /* Hidden until login */
+            width: 100%;
+            min-height: 100vh;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 70px 1fr;
+            grid-template-areas: 
+                "sidebar topbar"
+                "sidebar main";
+        }
+
+        /* --- Topbar Styles --- */
+        .topbar {
+            grid-area: topbar;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f1f3f5;
+            padding: 8px 16px;
+            border-radius: 20px;
+            width: 350px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+            margin-left: 8px;
+        }
+
+        .user-nav-profile {
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+        }
+
+        /* --- Sidebar Styles --- */
+        .sidebar {
+            grid-area: sidebar;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+        }
+
+        .sidebar .brand {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 0 24px;
+            margin-bottom: 40px;
+            color: #3498db;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            color: #bdc3c7;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #34495e;
+            color: #ffffff;
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+        }
+
+        .sidebar .logout-btn-nav {
+            margin-top: auto;
+            background-color: #c0392b;
+            margin-left: 24px;
+            margin-right: 24px;
+            text-align: center;
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            grid-area: main;
+            padding: 30px;
+            overflow-y: auto;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .view-section {
+            display: none; /* Toggled via JS */
+        }
+
+        .view-section.active-view {
+            display: block;
+        }
+
+        .view-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        /* --- Home/Items View Styles --- */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .item-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 180px;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .item-info { padding: 20px; }
+        .item-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #2c3e50; }
+        .item-price { font-size: 20px; color: #2ecc71; font-weight: bold; margin-bottom: 12px; }
+        .item-desc { font-size: 14px; color: #7f8c8d; margin-bottom: 20px; line-height: 1.4; min-height: 60px; }
+
+        /* --- Dashboard View Styles --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-card h3 { font-size: 14px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: bold; color: #2c3e50; }
+
+        /* --- Profile View Styles --- */
+        .profile-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            max-width: 600px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .profile-details p {
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .profile-details strong {
+            color: #2c3e50;
+            display: inline-block;
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div class="login-container" id="loginPage">
+        <h2>Welcome Back</h2>
+        <div class="error-msg" id="errorMsg">Invalid username or password!</div>
+        
+        <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username">
+        </div>
+        
+        <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password">
+        </div>
+        
+        <button class="btn" style="width: 100%;" onclick="handleLogin()">Login</button>
+    </div>
+
+    <!-- MAIN APP WRAPPER (NAVBARS + VIEWS) -->
+    <div class="app-container" id="appPage">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">Vincent's Shop</div>
+            <ul class="nav-links">
+                <li class="nav-item active" id="tab-home" onclick="switchView('home')">🏠 Home</li>
+                <li class="nav-item" id="tab-dashboard" onclick="switchView('dashboard')">📊 Dashboard</li>
+                <li class="nav-item" id="tab-profile" onclick="switchView('profile')">👤 Profile</li>
+            </ul>
+            <button class="btn logout-btn-nav" onclick="handleLogout()">Logout</button>
+        </aside>
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <div class="search-box" id="searchBarContainer">
+                🔍 <input type="text" id="searchInput" placeholder="Search items for sale..." onkeyup="filterItems()">
+            </div>
+            <div class="user-nav-profile" onclick="switchView('profile')">Hello, Vincent 👋</div>
+        </header>
+
+        <!-- MAIN MAIN CONTENT -->
+        <main>
+            
+            <!-- VIEW 1: HOME (ITEMS LISTING) -->
+            <section id="view-home" class="view-section active-view">
+                <h2 class="view-title">Items For Sale</h2>
+                <div class="items-grid" id="itemsGrid">
+                    
+                    <div class="item-card" data-title="pro gaming laptop">
+                        <div class="item-image">💻 Laptop</div>
+                        <div class="item-info">
+                            <div class="item-title">Pro Gaming Laptop</div>
+                            <div class="item-price">$1,299.00</div>
+                            <div class="item-desc">High-performance laptop featuring 16GB RAM, 512GB SSD, and dedicated graphics.</div>
+                            <button class="btn">Buy Now</button>
+                        </div>
+                    </div>
+
+                    <div class="item-card" data-title="wireless anc headphones">
+                        <div class="item-image">🎧 Headphones</div>
+                        <div class="item-info">
+                            <div class="item-title">Wireless ANC Headphones</div>
+                            <div class="item-price">$199.99</div>
+                            <div class="item-desc">Premium noise-canceling headphones with up to 30 hours of battery life.</div>
+                            <button class="btn">Buy Now</button>
+                        </div>
+                    </div>
+
+                    <div class="item-card" data-title="fitness smartwatch">
+                        <div class="item-image">⌚ Smartwatch</div>
+                        <div class="item-info">
+                            <div class="item-title">Fitness Smartwatch</div>
+                            <div class="item-price">$149.50</div>
+                            <div class="item-desc">Track your workouts, heart rate, and steps with clear AMOLED display styles.</div>
+                            <button class="btn">Buy Now</button>
+                        </div>
+                    </div>
+
+                    <div class="item-card" data-title="4k action camera">
+                        <div class="item-image">📷 Camera</div>
+                        <div class="item-info">
+                            <div class="item-title">4K Action Camera</div>
+                            <div class="item-price">$249.00</div>
+                            <div class="item-desc">Capture your adventures in stunning 4K ultra-HD. Waterproof housing included.</div>
+                            <button class="btn">Buy Now</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- VIEW 2: DASHBOARD -->
+            <section id="view-dashboard" class="view-section">
+                <h2 class="view-title">Business Overview Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Sales</h3>
+                        <div class="value">$14,240.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: #2ecc71;">
+                        <h3>Items Listed</h3>
+                        <div class="value">4 Active</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: #f1c40f;">
+                        <h3>Orders Pending</h3>
+                        <div class="value">12 Orders</div>
+                    </div>
+                </div>
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Recent Store Activity</h3>
+                    <p style="color: #7f8c8d; font-size: 14px;">Your storefront analytics and performance indicators are running smoothly.</p>
+                </div>
+            </section>
+
+            <!-- VIEW 3: PROFILE -->
+            <section id="view-profile" class="view-section">
+                <h2 class="view-title">My Account</h2>
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">V</div>
+                        <div>
+                            <h3 style="font-size: 22px; color: #2c3e50;">Vincent</h3>
+                            <p style="color: #7f8c8d;">Store Administrator</p>
+                        </div>
+                    </div>
+                    <div class="profile-details">
+                        <p><strong>Username:</strong> vincent</p>
+                        <p><strong>Email:</strong> vincent@marketplace.com</p>
+                        <p><strong>Account Status:</strong> <span style="color: #2ecc71; font-weight: bold;">Active Verified</span></p>
+                        <p><strong>Member Since:</strong> May 2026</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        // Authentication Routing
+        function handleLogin() {
+            const usernameInput = document.getElementById('username').value;
+            const passwordInput = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (usernameInput === "vincent" && passwordInput === "1234") {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('appPage').style.display = 'grid';
+                document.body.style.display = 'block'; // Unset flexing wrapper orientation
+                errorMsg.style.display = 'none';
+                switchView('home'); // Base entry point view
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('appPage').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'block';
+            
+            // Re-apply center align properties for login structural container
+            document.body.style.display = 'flex';
+            document.body.style.justifyContent = 'center';
+            document.body.style.alignItems = 'center';
+        }
+
+        // View Toggling Controller
+        function switchView(viewName) {
+            // Hide all views and clear highlight classes
+            const sections = document.querySelectorAll('.view-section');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            sections.forEach(section => section.classList.remove('active-view'));
+            navItems.forEach(item => item.classList.remove('active-view', 'active'));
+
+            // Show selected view
+            document.getElementById(`view-${viewName}`).classList.add('active-view');
+            document.getElementById(`tab-${viewName}`).classList.add('active');
+
+            // Toggle top search bar visibility contextually
+            const searchBar = document.getElementById('searchBarContainer');
+            if (viewName === 'home') {
+                searchBar.style.visibility = 'visible';
+            } else {
+                searchBar.style.visibility = 'hidden';
+            }
+        }
+
+        // Real-Time Search Filtering Logic
+        function filterItems() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.item-card');
+
+            cards.forEach(card => {
+                const itemTitle = card.getAttribute('data-title');
+                if (itemTitle.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
